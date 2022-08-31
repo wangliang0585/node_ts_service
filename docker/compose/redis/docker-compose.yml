@@ -1,0 +1,27 @@
+# 版本号
+version: "3"
+# 服务列表，命令：docker run
+services:
+  # 服务名称，任意，不重复即可
+  redis:
+    # 指定服务名称，命令：--name redis
+    # 如果不指定，则将默认用docker-compose.yml所在文件夹名_服务名称_n命名
+    container_name: redis
+    # 指定镜像：命令 redis:latest
+    image: redis:latest
+    # 指定端口：命令 -p 主机端口:容器端口
+    ports:
+      - "6379:6379"
+    # 数据容器卷
+    volumes:
+      - /root/docker/compose/redis/redis.conf:/etc/redis/redis.conf
+      - /root/docker/compose/redis/data:/data
+    # 加入指定网络，容器间必须要处于同一个网络才能通过容器名称进行调用
+    networks:
+      - my_network
+    # 运行命令
+    command: redis-server /etc/redis/redis.conf  
+# 创建网络      
+networks:
+  # 默认将会创建为 docker-compose.yml所在 文件夹名_my_network 网络名称
+  my_network:

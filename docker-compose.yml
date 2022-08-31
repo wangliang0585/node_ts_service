@@ -1,0 +1,75 @@
+version: '3.9'
+services:
+  web:
+    container_name: web
+    build: .
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "81:80"
+    environment:
+      - PORT=${PORT}
+    networks:
+      - test_compose_network
+    depends_on:
+      - redis
+      
+  
+  redis:
+    image: redis:latest
+    container_name: redis_server
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - test_compose_network
+
+  db-master:
+    # image: mysql:5.7
+    build: 
+      context: ./docker/mysql/master
+      dockerfile: Dockerfile
+    container_name: db-master
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_HOST=${MYSQL_MASTER_HOST}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_MASTER_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_MASTER_DATABASE}
+      - MYSQL_USER=${MYSQL_MASTER_USER}
+      - MYSQL_PASSWORD=${MYSQL_MASTER_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - test_compose_network
+    volumes:
+      - ./mysql-master-volumes:/var/lib/mysql
+
+  db-slave:
+    build:
+      context: ./docker/mysql/slave/
+      dockerfile: Dockerfile
+    container_name: db-slave
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_HOST=${MYSQL_SLAVE_HOST}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_SLAVE_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_SLAVE_DATABASE}
+      - MYSQL_USER=${MYSQL_SLAVE_USER}
+      - MYSQL_PASSWORD=${MYSQL_SLAVE_PASSWORD}
+    ports:
+      - "3307:3306"
+    networks:
+      - test_compose_network
+    volumes:
+      - ./mysql-slave-volumes:/var/lib/mysql
+
+networks:
+  test_compose_network:
